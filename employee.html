@@ -283,4 +283,98 @@ fetch(excelFile)
 
         if(otMatch){
 
-            otHours
+            otHours += Number(otMatch[1]);
+
+        }
+
+        attendanceHTML += `
+
+        <div class="day">
+
+            <span>
+                Day ${day}
+            </span>
+
+            <strong>
+                ${status}
+            </strong>
+
+        </div>
+
+        `;
+
+    });
+
+
+    /*
+       OT rate:
+       Daily wage ÷ 8
+    */
+
+    const otRate = wage / 8;
+
+    const otWage =
+        otHours * otRate;
+
+
+    /*
+       Normal monthly wage
+    */
+
+    const normalWage =
+        presentDays * wage;
+
+
+    /*
+       Total monthly wage
+    */
+
+    const monthlyWage =
+        normalWage + otWage;
+
+
+    document.getElementById("name")
+        .textContent = name;
+
+    document.getElementById("wage")
+        .textContent = wage.toFixed(2);
+
+    document.getElementById("present")
+        .textContent = presentDays;
+
+    document.getElementById("ot")
+        .textContent = otHours.toFixed(2);
+
+    document.getElementById("otwage")
+        .textContent = otWage.toFixed(2);
+
+    document.getElementById("monthly")
+        .textContent = monthlyWage.toFixed(2);
+
+    document.getElementById("month")
+        .textContent = "September 2026";
+
+    document.getElementById("attendance")
+        .innerHTML = attendanceHTML;
+
+
+    loading.style.display = "none";
+
+    dataBox.style.display = "block";
+
+})
+
+.catch(error => {
+
+    console.error(error);
+
+    showError(error.message);
+
+});
+
+}
+
+</script>
+
+</body>
+</html>
