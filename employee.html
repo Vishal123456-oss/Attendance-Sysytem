@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Excel Test</title>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -14,24 +15,42 @@
 
 <script>
 
-document.getElementById("status").innerHTML =
-"Step 1: JavaScript working ✅";
+const excelFile = "sep2026.xlsx";
 
-setTimeout(function(){
+fetch(excelFile)
 
-    if(typeof XLSX === "undefined"){
+.then(response => {
 
-        document.getElementById("status").innerHTML =
-        "❌ Excel library not loading";
-
-    }else{
-
-        document.getElementById("status").innerHTML =
-        "Step 2: Excel library working ✅";
-
+    if(!response.ok){
+        throw new Error("Excel file not found");
     }
 
-},1000);
+    return response.arrayBuffer();
+
+})
+
+.then(buffer => {
+
+    document.getElementById("status").innerHTML =
+        "Step 3: Excel file loaded ✅";
+
+    const workbook = XLSX.read(buffer,{
+        type:"array"
+    });
+
+    document.getElementById("status").innerHTML +=
+        "<br>Step 4: Excel opened ✅" +
+        "<br><br>Sheets: " +
+        workbook.SheetNames.join(", ");
+
+})
+
+.catch(error => {
+
+    document.getElementById("status").innerHTML =
+        "❌ " + error.message;
+
+});
 
 </script>
 
