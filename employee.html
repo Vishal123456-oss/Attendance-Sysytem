@@ -1,149 +1,52 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Employee Attendance</title>
-
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
-<style>
-body{
-    font-family:Arial,sans-serif;
-    background:#f2f5f9;
-    margin:0;
-    padding:20px;
-}
-
-.card{
-    max-width:500px;
-    margin:auto;
-    background:white;
-    padding:25px;
-    border-radius:15px;
-    box-shadow:0 4px 15px rgba(0,0,0,.15);
-}
-
-h1{
-    text-align:center;
-    margin-bottom:20px;
-}
-
-.row{
-    display:flex;
-    justify-content:space-between;
-    padding:12px 0;
-    border-bottom:1px solid #ddd;
-}
-
-.label{
-    font-weight:bold;
-}
-
-.value{
-    text-align:right;
-}
-
-.attendance{
-    margin-top:20px;
-}
-
-.day{
-    display:flex;
-    justify-content:space-between;
-    padding:8px;
-    border-bottom:1px solid #eee;
-}
-
-.loading{
-    text-align:center;
-    padding:30px;
-}
-</style>
-</head>
-
-<body>
-
-<div class="card">
-
-<h1>Employee Attendance</h1>
-
-<div id="loading" class="loading">
-Loading employee data...
-</div>
-
-<div id="data" style="display:none;">
-
-<div class="row">
-<span class="label">Employee</span>
-<span class="value" id="name"></span>
-</div>
-
-<div class="row">
-<span class="label">Daily Wage</span>
-<span class="value">₹<span id="wage"></span></span>
-</div>
-
-<div class="row">
-<span class="label">Present Days</span>
-<span class="value" id="present"></span>
-</div>
-
-<div class="row">
-<span class="label">OT Hours</span>
-<span class="value" id="ot"></span>
-</div>
-
-<div class="row">
-<span class="label">OT Wages</span>
-<span class="value">₹<span id="otwage"></span></span>
-</div>
-
-<div class="row">
-<span class="label">Monthly Wage</span>
-<span class="value">₹<span id="monthly"></span></span>
-</div>
-
-<h3 id="month"></h3>
-
-<div class="attendance" id="attendance"></div>
-
-</div>
-</div>
-
 <script>
 
-const excelFile = "sep2026(1).xlsx";
+const excelFile = "sep2026.xlsx";
 
 const params = new URLSearchParams(window.location.search);
 const employeeId = Number(params.get("id"));
 
+const loading = document.getElementById("loading");
+const dataBox = document.getElementById("data");
+
+function showError(message){
+    loading.innerHTML =
+        "❌ " + message +
+        "<br><br><small>Employee ID example: ?id=1</small>";
+}
+
 if(!employeeId){
-    document.getElementById("loading").innerHTML =
-        "Employee ID missing.<br><br>Example:<br>employee.html?id=1";
+    showError("Employee ID missing.");
 }else{
 
 fetch(excelFile)
+
 .then(response => {
 
     if(!response.ok){
-        throw new Error("Excel file not found");
+        throw new Error("Excel file not found: " + excelFile);
     }
 
     return response.arrayBuffer();
 })
+
 .then(buffer => {
 
-    const workbook = XLSX.read(buffer, {
+    const workbook = XLSX.read(buffer,{
         type:"array"
     });
 
-    const sheet = workbook.Sheets["September Attendance"];
+    let sheetName = "September Attendance";
 
-    if(!sheet){
-        throw new Error("September Attendance sheet not found");
+    // If exact sheet is not found, use first sheet
+    if(!workbook.Sheets[sheetName]){
+        sheetName = workbook.SheetNames[0];
     }
+
+    if(!sheetName){
+        throw new Error("Excel sheet not found.");
+    }
+
+    const sheet = workbook.Sheets[sheetName];
 
     const rows = XLSX.utils.sheet_to_json(sheet,{
         header:1,
@@ -151,42 +54,115 @@ fetch(excelFile)
     });
 
     /*
-       Excel:
-       Row 5 = Employee ID 1
-       Row 6 = Employee ID 2
-       ...
+      Employee ID 1 = Excel row 5
+      Employee ID 2 = Excel row 6
+      Employee ID 3 = Excel row 7
+      etc.
     */
 
     const excelRow = employeeId + 4;
-
     const row = rows[excelRow - 1];
 
     if(!row || !row[0]){
-        throw new Error("Employee not found");
+        throw new Error(
+            "Employee ID " + employeeId + " not found."
+        );
     }
 
     const name = row[0];
     const wage = Number(row[1]) || 0;
 
-    // C:AG = 31 attendance columns
+    // Attendance columns C to AG
     const attendance = row.slice(2,33);
 
     let presentDays = 0;
     let otHours = 0;
+    let attendanceHTML = "";
 
-    attendance.forEach(status => {
+    attendance.forEach((status,index) => {
 
         status = String(status).trim();
 
+        if(status === ""){
+            return;
+        }
+
+        // Present
         if(status.startsWith("P")){
             presentDays += 1;
         }
 
+        // Half day
         if(status.startsWith("H")){
             presentDays += 0.5;
         }
 
-        const match = status.match(/\+(\d+)/);
+        // OT
+        const match = status.match(/\+(\d+(?:\.\d+)?)\s*(?:ot)?/i);
 
         if(match){
-            otHours
+            otHours += Number(match[1]);
+        }
+
+        const day = index + 1;
+
+        attendanceHTML += `
+            <div class="day">
+                <span>Day ${day}</span>
+                <span>${status}</span>
+            </div>
+        `;
+    });
+
+    // 1 hour OT = daily wage / 8
+    const otRate = wage / 8;
+
+    const otWage = otHours * otRate;
+
+    const normalWage = presentDays * wage;
+
+    const monthlyWage = normalWage + otWage;
+
+    // Show data
+    document.getElementById("name").textContent = name;
+
+    document.getElementById("wage").textContent =
+        wage.toFixed(2);
+
+    document.getElementById("present").textContent =
+        presentDays;
+
+    document.getElementById("ot").textContent =
+        otHours.toFixed(2);
+
+    document.getElementById("otwage").textContent =
+        otWage.toFixed(2);
+
+    document.getElementById("monthly").textContent =
+        monthlyWage.toFixed(2);
+
+    document.getElementById("month").textContent =
+        "September 2026";
+
+    document.getElementById("attendance").innerHTML =
+        attendanceHTML;
+
+    // Hide loading
+    loading.style.display = "none";
+
+    // Show employee data
+    dataBox.style.display = "block";
+
+})
+
+.catch(error => {
+
+    console.error(error);
+
+    showError(error.message);
+
+});
+
+}
+
+    </script>
