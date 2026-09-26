@@ -1,168 +1,19 @@
-<script>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Employee Attendance</title>
+</head>
 
-const excelFile = "sep2026.xlsx";
+<body>
 
-const params = new URLSearchParams(window.location.search);
-const employeeId = Number(params.get("id"));
+<h1 style="text-align:center;">Employee Attendance</h1>
 
-const loading = document.getElementById("loading");
-const dataBox = document.getElementById("data");
+<div style="text-align:center;">
+    <h2>Website is working ✅</h2>
+    <p>Employee Attendance System</p>
+</div>
 
-function showError(message){
-    loading.innerHTML =
-        "❌ " + message +
-        "<br><br><small>Employee ID example: ?id=1</small>";
-}
-
-if(!employeeId){
-    showError("Employee ID missing.");
-}else{
-
-fetch(excelFile)
-
-.then(response => {
-
-    if(!response.ok){
-        throw new Error("Excel file not found: " + excelFile);
-    }
-
-    return response.arrayBuffer();
-})
-
-.then(buffer => {
-
-    const workbook = XLSX.read(buffer,{
-        type:"array"
-    });
-
-    let sheetName = "September Attendance";
-
-    // If exact sheet is not found, use first sheet
-    if(!workbook.Sheets[sheetName]){
-        sheetName = workbook.SheetNames[0];
-    }
-
-    if(!sheetName){
-        throw new Error("Excel sheet not found.");
-    }
-
-    const sheet = workbook.Sheets[sheetName];
-
-    const rows = XLSX.utils.sheet_to_json(sheet,{
-        header:1,
-        defval:""
-    });
-
-    /*
-      Employee ID 1 = Excel row 5
-      Employee ID 2 = Excel row 6
-      Employee ID 3 = Excel row 7
-      etc.
-    */
-
-    const excelRow = employeeId + 4;
-    const row = rows[excelRow - 1];
-
-    if(!row || !row[0]){
-        throw new Error(
-            "Employee ID " + employeeId + " not found."
-        );
-    }
-
-    const name = row[0];
-    const wage = Number(row[1]) || 0;
-
-    // Attendance columns C to AG
-    const attendance = row.slice(2,33);
-
-    let presentDays = 0;
-    let otHours = 0;
-    let attendanceHTML = "";
-
-    attendance.forEach((status,index) => {
-
-        status = String(status).trim();
-
-        if(status === ""){
-            return;
-        }
-
-        // Present
-        if(status.startsWith("P")){
-            presentDays += 1;
-        }
-
-        // Half day
-        if(status.startsWith("H")){
-            presentDays += 0.5;
-        }
-
-        // OT
-        const match = status.match(/\+(\d+(?:\.\d+)?)\s*(?:ot)?/i);
-
-        if(match){
-            otHours += Number(match[1]);
-        }
-
-        const day = index + 1;
-
-        attendanceHTML += `
-            <div class="day">
-                <span>Day ${day}</span>
-                <span>${status}</span>
-            </div>
-        `;
-    });
-
-    // 1 hour OT = daily wage / 8
-    const otRate = wage / 8;
-
-    const otWage = otHours * otRate;
-
-    const normalWage = presentDays * wage;
-
-    const monthlyWage = normalWage + otWage;
-
-    // Show data
-    document.getElementById("name").textContent = name;
-
-    document.getElementById("wage").textContent =
-        wage.toFixed(2);
-
-    document.getElementById("present").textContent =
-        presentDays;
-
-    document.getElementById("ot").textContent =
-        otHours.toFixed(2);
-
-    document.getElementById("otwage").textContent =
-        otWage.toFixed(2);
-
-    document.getElementById("monthly").textContent =
-        monthlyWage.toFixed(2);
-
-    document.getElementById("month").textContent =
-        "September 2026";
-
-    document.getElementById("attendance").innerHTML =
-        attendanceHTML;
-
-    // Hide loading
-    loading.style.display = "none";
-
-    // Show employee data
-    dataBox.style.display = "block";
-
-})
-
-.catch(error => {
-
-    console.error(error);
-
-    showError(error.message);
-
-});
-
-}
-
-    </script>
+</body>
+</html>
