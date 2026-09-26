@@ -1,60 +1,132 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Excel Test</title>
+<title>Employee Attendance</title>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+body{
+    font-family:Arial,sans-serif;
+    background:#f2f5f9;
+    margin:0;
+    padding:20px;
+}
+
+.card{
+    max-width:500px;
+    margin:auto;
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 4px 15px rgba(0,0,0,.15);
+}
+
+h1{
+    text-align:center;
+}
+
+.row{
+    display:flex;
+    justify-content:space-between;
+    padding:12px 0;
+    border-bottom:1px solid #ddd;
+}
+
+.label{
+    font-weight:bold;
+}
+
+.value{
+    text-align:right;
+}
+
+.attendance{
+    margin-top:20px;
+}
+
+.day{
+    display:flex;
+    justify-content:space-between;
+    padding:9px;
+    border-bottom:1px solid #eee;
+}
+
+.loading{
+    text-align:center;
+    padding:30px;
+}
+
+.error{
+    color:red;
+    text-align:center;
+    padding:20px;
+}
+</style>
 </head>
 
 <body>
 
-<h2 id="status">Loading...</h2>
+<div class="card">
+
+<h1>Employee Attendance</h1>
+
+<div id="loading" class="loading">
+Loading employee data...
+</div>
+
+<div id="error" class="error" style="display:none;"></div>
+
+<div id="data" style="display:none;">
+
+<div class="row">
+<span class="label">Employee</span>
+<span class="value" id="name"></span>
+</div>
+
+<div class="row">
+<span class="label">Daily Wage</span>
+<span class="value">₹<span id="wage"></span></span>
+</div>
+
+<div class="row">
+<span class="label">Present Days</span>
+<span class="value" id="present"></span>
+</div>
+
+<div class="row">
+<span class="label">OT Hours</span>
+<span class="value" id="ot"></span>
+</div>
+
+<div class="row">
+<span class="label">OT Wages</span>
+<span class="value">₹<span id="otwage"></span></span>
+</div>
+
+<div class="row">
+<span class="label">Monthly Wage</span>
+<span class="value">₹<span id="monthly"></span></span>
+</div>
+
+<h3 id="month"></h3>
+
+<div class="attendance" id="attendance"></div>
+
+</div>
+
+</div>
+
 
 <script>
 
 const excelFile = "sep2026.xlsx";
 
-fetch(excelFile)
+const params = new URLSearchParams(window.location.search);
 
-.then(response => {
+const employeeId = Number(params.get("id"));
 
-    if(!response.ok){
-        throw new Error(
-            "Excel file not found. HTTP " + response.status
-        );
-    }
-
-    return response.arrayBuffer();
-
-})
-
-.then(buffer => {
-
-    document.getElementById("status").innerHTML =
-        "Step 3: Excel file loaded ✅";
-
-    const workbook = XLSX.read(buffer,{
-        type:"array"
-    });
-
-    document.getElementById("status").innerHTML +=
-        "<br>Step 4: Excel opened ✅" +
-        "<br><br>Sheet names:<br>" +
-        workbook.SheetNames.join("<br>");
-
-})
-
-.catch(error => {
-
-    document.getElementById("status").innerHTML =
-        "❌ " + error.message;
-
-});
-
-</script>
-
-</body>
-</html>
+const loading = document.getElementById("loading");
