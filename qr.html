@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Employee QR</title>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+<style>
+
+body{
+    font-family:Arial,sans-serif;
+    background:#f2f5f9;
+    text-align:center;
+    padding:30px;
+}
+
+.card{
+    max-width:400px;
+    margin:auto;
+    background:white;
+    padding:30px;
+    border-radius:15px;
+    box-shadow:0 4px 15px rgba(0,0,0,.15);
+}
+
+#qrcode{
+    margin:25px auto;
+    width:256px;
+    height:256px;
+}
+
+button{
+    padding:12px 20px;
+    border:0;
+    border-radius:8px;
+    background:#111;
+    color:white;
+    font-size:16px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<h2 id="name">Employee QR</h2>
+
+<p>Scan this QR to view attendance</p>
+
+<div id="qrcode"></div>
+
+<button onclick="window.print()">
+Print QR
+</button>
+
+</div>
+
+
+<script>
+
+const params =
+new URLSearchParams(window.location.search);
+
+const employeeId =
+Number(params.get("id"));
+
+
+/*
+Employee names
+*/
+
+const employees = {
+
+1:"VICKRAM",
+2:"VISHU",
+3:"GURDEEP",
+4:"SAHIL",
+5:"VICKY",
+6:"AMAN",
+7:"GIRDHARI",
+8:"UTTAM",
+9:"RAHUL",
+10:"OM PRAKASH",
+11:"VARUN",
+12:"GOKUL",
+13:"RAKESH SINGH",
+14:"RAKESH SHARMA",
+15:"SUDESH SINGH"
+
+};
+
+
+if(!employeeId){
+
+    document.getElementById("name")
+    .innerText =
+    "Employee ID missing";
+
+}
+else{
+
+    const employeeName =
+    employees[employeeId] ||
+    "Employee " + employeeId;
+
+
+    document.getElementById("name")
+    .innerText =
+    employeeName;
+
+
+    /*
+    Current GitHub Pages address
+    */
+
+    const attendanceURL =
+    window.location.origin +
+    "/Attendance-System/employee.html?id=" +
+    employeeId;
+
+
+    new QRCode(
+        document.getElementById("qrcode"),
+        {
+            text:attendanceURL,
+            width:256,
+            height:256
+        }
+    );
+
+}
+
+</script>
+
+</body>
+
+</html>
