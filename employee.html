@@ -22,7 +22,9 @@ fetch(excelFile)
 .then(response => {
 
     if(!response.ok){
-        throw new Error("Excel file not found");
+        throw new Error(
+            "Excel file not found. HTTP " + response.status
+        );
     }
 
     return response.arrayBuffer();
@@ -40,8 +42,8 @@ fetch(excelFile)
 
     document.getElementById("status").innerHTML +=
         "<br>Step 4: Excel opened ✅" +
-        "<br><br>Sheets: " +
-        workbook.SheetNames.join(", ");
+        "<br><br>Sheet names:<br>" +
+        workbook.SheetNames.join("<br>");
 
 })
 
