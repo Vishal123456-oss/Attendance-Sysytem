@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Employee Attendance</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <style>
 body{
@@ -24,7 +27,7 @@ body{
 
 h1{
     text-align:center;
-    margin-bottom:25px;
+    margin-bottom:20px;
 }
 
 .row{
@@ -42,6 +45,17 @@ h1{
     text-align:right;
 }
 
+.attendance{
+    margin-top:20px;
+}
+
+.day{
+    display:flex;
+    justify-content:space-between;
+    padding:8px;
+    border-bottom:1px solid #eee;
+}
+
 .loading{
     text-align:center;
     padding:30px;
@@ -55,107 +69,124 @@ h1{
 
 <h1>Employee Attendance</h1>
 
-<div id="data" class="loading">
+<div id="loading" class="loading">
 Loading employee data...
 </div>
 
-</div>
-
-<script>
-
-const employees = {
-
-    "1": {
-        name: "VICKRAM",
-        wage: 600,
-        present: 25,
-        half: 1,
-        otHours: 8,
-        otWages: 600,
-        monthlyWage: 15600
-    },
-
-    "2": {
-        name: "VISHU",
-        wage: 600,
-        present: 24,
-        half: 0,
-        otHours: 6,
-        otWages: 450,
-        monthlyWage: 14850
-    },
-
-    "3": {
-        name: "GURDEEP",
-        wage: 520,
-        present: 25,
-        half: 0,
-        otHours: 5,
-        otWages: 325,
-        monthlyWage: 13325
-    }
-
-};
-
-const params = new URLSearchParams(window.location.search);
-const id = params.get("id");
-
-const employee = employees[id];
-
-if(employee){
-
-document.getElementById("data").innerHTML = `
+<div id="data" style="display:none;">
 
 <div class="row">
-<span class="label">Employee ID</span>
-<span class="value">${id}</span>
+<span class="label">Employee</span>
+<span class="value" id="name"></span>
 </div>
 
 <div class="row">
-<span class="label">Name</span>
-<span class="value">${employee.name}</span>
-</div>
-
-<div class="row">
-<span class="label">Per Day Wage</span>
-<span class="value">₹${employee.wage}</span>
+<span class="label">Daily Wage</span>
+<span class="value">₹<span id="wage"></span></span>
 </div>
 
 <div class="row">
 <span class="label">Present Days</span>
-<span class="value">${employee.present}</span>
-</div>
-
-<div class="row">
-<span class="label">Half Days</span>
-<span class="value">${employee.half}</span>
+<span class="value" id="present"></span>
 </div>
 
 <div class="row">
 <span class="label">OT Hours</span>
-<span class="value">${employee.otHours}</span>
+<span class="value" id="ot"></span>
 </div>
 
 <div class="row">
 <span class="label">OT Wages</span>
-<span class="value">₹${employee.otWages}</span>
+<span class="value">₹<span id="otwage"></span></span>
 </div>
 
 <div class="row">
 <span class="label">Monthly Wage</span>
-<span class="value"><b>₹${employee.monthlyWage}</b></span>
+<span class="value">₹<span id="monthly"></span></span>
 </div>
 
-`;
+<h3 id="month"></h3>
 
+<div class="attendance" id="attendance"></div>
+
+</div>
+</div>
+
+<script>
+
+const excelFile = "sep2026(1).xlsx";
+
+const params = new URLSearchParams(window.location.search);
+const employeeId = Number(params.get("id"));
+
+if(!employeeId){
+    document.getElementById("loading").innerHTML =
+        "Employee ID missing.<br><br>Example:<br>employee.html?id=1";
 }else{
 
-document.getElementById("data").innerHTML =
-"<h3>Employee not found</h3>";
+fetch(excelFile)
+.then(response => {
 
-}
+    if(!response.ok){
+        throw new Error("Excel file not found");
+    }
 
-</script>
+    return response.arrayBuffer();
+})
+.then(buffer => {
 
-</body>
-</html>
+    const workbook = XLSX.read(buffer, {
+        type:"array"
+    });
+
+    const sheet = workbook.Sheets["September Attendance"];
+
+    if(!sheet){
+        throw new Error("September Attendance sheet not found");
+    }
+
+    const rows = XLSX.utils.sheet_to_json(sheet,{
+        header:1,
+        defval:""
+    });
+
+    /*
+       Excel:
+       Row 5 = Employee ID 1
+       Row 6 = Employee ID 2
+       ...
+    */
+
+    const excelRow = employeeId + 4;
+
+    const row = rows[excelRow - 1];
+
+    if(!row || !row[0]){
+        throw new Error("Employee not found");
+    }
+
+    const name = row[0];
+    const wage = Number(row[1]) || 0;
+
+    // C:AG = 31 attendance columns
+    const attendance = row.slice(2,33);
+
+    let presentDays = 0;
+    let otHours = 0;
+
+    attendance.forEach(status => {
+
+        status = String(status).trim();
+
+        if(status.startsWith("P")){
+            presentDays += 1;
+        }
+
+        if(status.startsWith("H")){
+            presentDays += 0.5;
+        }
+
+        const match = status.match(/\+(\d+)/);
+
+        if(match){
+            otHours
