@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Employee Attendance</title>
+
+<style>
+body{
+    font-family:Arial,sans-serif;
+    background:#f2f5f9;
+    margin:0;
+    padding:20px;
+}
+
+.card{
+    max-width:500px;
+    margin:auto;
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 4px 15px rgba(0,0,0,.15);
+}
+
+h1{
+    text-align:center;
+    margin-bottom:25px;
+}
+
+.row{
+    display:flex;
+    justify-content:space-between;
+    padding:12px 0;
+    border-bottom:1px solid #ddd;
+}
+
+.label{
+    font-weight:bold;
+}
+
+.value{
+    text-align:right;
+}
+
+.loading{
+    text-align:center;
+    padding:30px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<h1>Employee Attendance</h1>
+
+<div id="data" class="loading">
+Loading employee data...
+</div>
+
+</div>
+
+<script>
+
+const employees = {
+
+    "1": {
+        name: "VICKRAM",
+        wage: 600,
+        present: 25,
+        half: 1,
+        otHours: 8,
+        otWages: 600,
+        monthlyWage: 15600
+    },
+
+    "2": {
+        name: "VISHU",
+        wage: 600,
+        present: 24,
+        half: 0,
+        otHours: 6,
+        otWages: 450,
+        monthlyWage: 14850
+    },
+
+    "3": {
+        name: "GURDEEP",
+        wage: 520,
+        present: 25,
+        half: 0,
+        otHours: 5,
+        otWages: 325,
+        monthlyWage: 13325
+    }
+
+};
+
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
+
+const employee = employees[id];
+
+if(employee){
+
+document.getElementById("data").innerHTML = `
+
+<div class="row">
+<span class="label">Employee ID</span>
+<span class="value">${id}</span>
+</div>
+
+<div class="row">
+<span class="label">Name</span>
+<span class="value">${employee.name}</span>
+</div>
+
+<div class="row">
+<span class="label">Per Day Wage</span>
+<span class="value">₹${employee.wage}</span>
+</div>
+
+<div class="row">
+<span class="label">Present Days</span>
+<span class="value">${employee.present}</span>
+</div>
+
+<div class="row">
+<span class="label">Half Days</span>
+<span class="value">${employee.half}</span>
+</div>
+
+<div class="row">
+<span class="label">OT Hours</span>
+<span class="value">${employee.otHours}</span>
+</div>
+
+<div class="row">
+<span class="label">OT Wages</span>
+<span class="value">₹${employee.otWages}</span>
+</div>
+
+<div class="row">
+<span class="label">Monthly Wage</span>
+<span class="value"><b>₹${employee.monthlyWage}</b></span>
+</div>
+
+`;
+
+}else{
+
+document.getElementById("data").innerHTML =
+"<h3>Employee not found</h3>";
+
+}
+
+</script>
+
+</body>
+</html>
