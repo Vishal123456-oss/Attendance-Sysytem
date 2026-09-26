@@ -1,75 +1,383 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Attendance Test</title>
+
+<title>Employee Attendance</title>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+body{
+    font-family:Arial,sans-serif;
+    background:#f2f5f9;
+    margin:0;
+    padding:20px;
+}
+
+.card{
+    max-width:500px;
+    margin:auto;
+    background:#fff;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 4px 15px rgba(0,0,0,.15);
+}
+
+h1{
+    text-align:center;
+    margin-top:0;
+}
+
+.row{
+    display:flex;
+    justify-content:space-between;
+    padding:12px 0;
+    border-bottom:1px solid #ddd;
+}
+
+.label{
+    font-weight:bold;
+}
+
+.value{
+    text-align:right;
+}
+
+.attendance{
+    margin-top:20px;
+}
+
+.day{
+    display:flex;
+    justify-content:space-between;
+    padding:9px;
+    border-bottom:1px solid #eee;
+}
+
+.loading{
+    text-align:center;
+    padding:30px;
+}
+
+.error{
+    color:#c00;
+    text-align:center;
+    padding:20px;
+}
+</style>
 </head>
 
 <body>
 
-<h2 id="status">Step 1: Starting...</h2>
+<div class="card">
+
+<h1>Employee Attendance</h1>
+
+<div id="loading" class="loading">
+Loading employee data...
+</div>
+
+<div id="error" class="error" style="display:none;"></div>
+
+<div id="data" style="display:none;">
+
+<div class="row">
+<span class="label">Employee</span>
+<span class="value" id="name"></span>
+</div>
+
+<div class="row">
+<span class="label">Daily Wage</span>
+<span class="value">₹<span id="wage"></span></span>
+</div>
+
+<div class="row">
+<span class="label">Present Days</span>
+<span class="value" id="present"></span>
+</div>
+
+<div class="row">
+<span class="label">OT Hours</span>
+<span class="value" id="ot"></span>
+</div>
+
+<div class="row">
+<span class="label">OT Wages</span>
+<span class="value">₹<span id="otwage"></span></span>
+</div>
+
+<div class="row">
+<span class="label">Monthly Wage</span>
+<span class="value">₹<span id="monthly"></span></span>
+</div>
+
+<h3>Daily Attendance</h3>
+
+<div class="attendance" id="attendance"></div>
+
+</div>
+</div>
+
 
 <script>
 
-const status = document.getElementById("status");
+const EXCEL_FILE = "sep2026.xlsx";
+const SHEET_NAME = "September Attendance";
 
-status.innerHTML = "Step 1: JavaScript working ✅";
+const params =
+new URLSearchParams(window.location.search);
 
-const params = new URLSearchParams(window.location.search);
-const employeeId = params.get("id");
+const employeeId =
+parseInt(params.get("id"),10);
 
-status.innerHTML +=
-    "<br>Step 2: Employee ID = " + employeeId;
+const loading =
+document.getElementById("loading");
 
-const excelFile = "sep2026.xlsx";
+const dataBox =
+document.getElementById("data");
 
-fetch(excelFile)
+const errorBox =
+document.getElementById("error");
 
-.then(response => {
 
-    status.innerHTML +=
-        "<br>Step 3: Excel request completed ✅";
+function showError(message){
 
-    if(!response.ok){
-        throw new Error(
-            "Excel HTTP error: " + response.status
+    loading.style.display = "none";
+
+    errorBox.style.display = "block";
+
+    errorBox.innerHTML = "❌ " + message;
+}
+
+
+if(!employeeId || employeeId < 1){
+
+    showError(
+        "Employee ID missing.<br><br>" +
+        "Example:<br>" +
+        "employee.html?id=1"
+    );
+
+}
+else{
+
+    fetch(EXCEL_FILE)
+
+    .then(response => {
+
+        if(!response.ok){
+            throw new Error(
+                "Excel file could not be loaded."
+            );
+        }
+
+        return response.arrayBuffer();
+
+    })
+
+    .then(buffer => {
+
+        const workbook =
+        XLSX.read(buffer,{
+            type:"array"
+        });
+
+
+        const sheet =
+        workbook.Sheets[SHEET_NAME];
+
+
+        if(!sheet){
+
+            throw new Error(
+                "Sheet '" +
+                SHEET_NAME +
+                "' was not found."
+            );
+
+        }
+
+
+        const rows =
+        XLSX.utils.sheet_to_json(
+            sheet,
+            {
+                header:1,
+                defval:""
+            }
         );
-    }
 
-    return response.arrayBuffer();
 
-})
+        /*
+        Employee 1 = Excel row 5
+        Employee 2 = Excel row 6
+        Employee 3 = Excel row 7
 
-.then(buffer => {
+        Therefore employee ID + 4
+        */
 
-    status.innerHTML +=
-        "<br>Step 4: Excel file loaded ✅";
+        const excelRowIndex =
+        employeeId + 4 - 1;
 
-    const workbook = XLSX.read(buffer,{
-        type:"array"
+
+        const row =
+        rows[excelRowIndex];
+
+
+        if(!row){
+
+            throw new Error(
+                "Employee ID " +
+                employeeId +
+                " not found."
+            );
+
+        }
+
+
+        const name =
+        String(row[0]).trim();
+
+
+        if(!name){
+
+            throw new Error(
+                "Employee name is empty."
+            );
+
+        }
+
+
+        /*
+        Excel columns:
+
+        A  = Name
+        B  = Daily Wage
+
+        C:AG = Attendance
+        AH = Present Days
+        AI = OT Hours
+        AJ = OT Wages
+        AK = Monthly Wage
+        */
+
+
+        const wage =
+        Number(row[1]) || 0;
+
+
+        const attendance =
+        row.slice(2,33);
+
+
+        /*
+        Use Excel's calculated totals.
+        */
+
+        const presentDays =
+        Number(row[33]) || 0;
+
+
+        const otHours =
+        Number(row[34]) || 0;
+
+
+        const otWage =
+        Number(row[35]) || 0;
+
+
+        const monthlyWage =
+        Number(row[36]) || 0;
+
+
+        /*
+        Build daily attendance.
+        */
+
+        let html = "";
+
+
+        attendance.forEach((value,index)=>{
+
+            const status =
+            String(value).trim();
+
+
+            if(status === ""){
+                return;
+            }
+
+
+            html += `
+                <div class="day">
+                    <span>Day ${index + 1}</span>
+                    <strong>${status}</strong>
+                </div>
+            `;
+
+        });
+
+
+        /*
+        Display data.
+        */
+
+        document.getElementById("name")
+        .textContent = name;
+
+
+        document.getElementById("wage")
+        .textContent =
+        wage.toFixed(2);
+
+
+        document.getElementById("present")
+        .textContent =
+        presentDays;
+
+
+        document.getElementById("ot")
+        .textContent =
+        otHours;
+
+
+        document.getElementById("otwage")
+        .textContent =
+        otWage.toFixed(2);
+
+
+        document.getElementById("monthly")
+        .textContent =
+        monthlyWage.toFixed(2);
+
+
+        document.getElementById("attendance")
+        .innerHTML =
+        html;
+
+
+        loading.style.display =
+        "none";
+
+
+        dataBox.style.display =
+        "block";
+
+    })
+
+    .catch(error => {
+
+        console.error(error);
+
+        showError(error.message);
+
     });
 
-    status.innerHTML +=
-        "<br>Step 5: Excel opened ✅";
-
-    status.innerHTML +=
-        "<br>Sheets: " +
-        workbook.SheetNames.join(", ");
-
-})
-
-.catch(error => {
-
-    status.innerHTML +=
-        "<br><br>❌ ERROR: " +
-        error.message;
-
-});
+}
 
 </script>
 
 </body>
-</html>
+    </html>
