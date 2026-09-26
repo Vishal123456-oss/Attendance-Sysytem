@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Attendance System</title>
+<style>
+body{margin:0;background:#f3f7fb;font-family:Arial,sans-serif;color:#18212b}
+.header{background:#087f5b;color:#fff;text-align:center;padding:24px 15px}
+.container{max-width:760px;margin:18px auto;padding:0 12px}.card{background:#fff;border-radius:16px;padding:20px;margin-bottom:15px;box-shadow:0 3px 16px #00000012}
+.welcome{color:#1266d6;font-size:21px;font-weight:700}.emp{font-size:24px;font-weight:700;margin-top:12px}
+.table{overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:9px;border-bottom:1px solid #e5e9ee;text-align:left}th{background:#f5f8fb}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:#f5f8fb;padding:12px;border-radius:11px}.stat small{display:block;color:#667085}.stat b{font-size:18px}
+.badge{font-weight:700}.note{font-size:13px;color:#667085}
+</style></head>
+<body>
+<div class="header"><h2>Attendance System</h2><div>Employee Attendance & Wage Portal</div></div>
+<main class="container">
+<div class="card">
+<div class="welcome">Welcome Dear, ☺️</div>
+<div style="margin-top:7px"><b>To The,</b><br>Ms SURINDER KUMAR<br><b>Attendance System</b></div>
+<div class="emp" id="name"></div><div id="id"></div>
+</div>
+<div class="card"><h3>Daily Attendance</h3><div class="table"><table>
+<thead><tr><th>Date</th><th>Attendance</th></tr></thead><tbody id="rows"></tbody>
+</table></div></div>
+<div class="card"><h3>Monthly Summary</h3><div class="grid">
+<div class="stat"><small>Total Present</small><b id="present"></b></div>
+<div class="stat"><small>Total OT</small><b id="ot"></b></div>
+<div class="stat"><small>OT Wage</small><b id="otw"></b></div>
+<div class="stat"><small>Monthly Wage</small><b id="wage"></b></div>
+</div></div>
+<div class="card note">This page shows the attendance data connected to the current website data file.</div>
+</main>
+<script src="data.js"></script><script>
+const p=new URLSearchParams(location.search), id=Number(p.get("id")||1);
+const e=ATTENDANCE_DATA.employees.find(x=>x.id===id)||ATTENDANCE_DATA.employees[0];
+document.getElementById("name").textContent=e.name;
+document.getElementById("id").textContent="Employee ID: "+e.id;
+const tb=document.getElementById("rows");
+ATTENDANCE_DATA.dates.forEach((d,i)=>{let tr=document.createElement("tr");tr.innerHTML="<td>"+d+"</td><td class='badge'>"+(e.attendance[i]||"")+"</td>";tb.appendChild(tr)});
+document.getElementById("present").textContent=e.present+" Days";
+document.getElementById("ot").textContent=e.ot+" Hours";
+document.getElementById("otw").textContent="₹"+(e.ot*e.otRate);
+document.getElementById("wage").textContent="₹"+e.monthly;
+</script></body></html>
